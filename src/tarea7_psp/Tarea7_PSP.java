@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package tarea7_psp;
 
 /**
@@ -11,11 +6,23 @@ package tarea7_psp;
  */
 public class Tarea7_PSP {
 
-    /**
-     * @param args the command line arguments
-     */
+    static String cadena = "";
+    static int longitudCadena;
+    static char letraCadena;
+
     public static void main(String[] args) {
-        // TODO code application logic here
+
+        // genero una longitud de cadena aleatoria entre 10 y 20 caracteres
+        longitudCadena = (int) (Math.random() * 10 + 10);
+
+        for (int i = 0; i < longitudCadena; i++) {
+
+            int n = (int) (Math.random() * (91 - 65)) + 65;
+
+            letraCadena = (char) n;
+            cadena += String.valueOf(letraCadena);
+        }
+        System.out.println(cadena);
     }
-    
+
 }
