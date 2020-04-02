@@ -16,44 +16,42 @@ public class Tarea7_PSP {
     static int longitudCadena;
     static char letraCadena;
 
+    static SecretKey clavePass = null;
     static SecretKey clave = null;
 
     public static void main(String[] args)
             throws NoSuchAlgorithmException, NoSuchPaddingException {
 
-        // genero una longitud de cadena aleatoria entre 10 y 20 caracteres
+        // GENERO UN FICHERO DE TEXTO DE CONTENIDO Y LONGITUD ALEATORIA
+        // ENTRE 10 Y 20 CARACTERES
         longitudCadena = (int) (Math.random() * 10 + 10);
 
         for (int i = 0; i < longitudCadena; i++) {
 
             int n = (int) (Math.random() * (91 - 65)) + 65;
-
             letraCadena = (char) n;
             cadena += String.valueOf(letraCadena);
         }
 
         try {
-            // crear fichero
 
-            BufferedWriter bw = new BufferedWriter(new FileWriter("fichero.cifrado", true));
+            // CREO EL FICHERO DE TEXTO
+            BufferedWriter bw = new BufferedWriter(new FileWriter("fichero.texto"));
             bw.write(" ");
             bw.write(cadena);
             bw.close();
         } catch (IOException ex) {
             System.out.println(ex);
         }
-        SecretKey clave = cifrarFichero("fichero.cifrado");
-
-        Cipher cifrado = Cipher.getInstance("AES");
 
         System.out.println(cadena);
 
-        crearClave();
-        almacenarClave();
+        clave = crearClave();
+        descifrarClave(clave);
 
     }
 
-    private static void crearClave() {
+    private static SecretKey crearClave() {
 
         try {
             String nombreUsuario = JOptionPane.showInputDialog("introduce tu nombre de usuario");
@@ -65,11 +63,16 @@ public class Tarea7_PSP {
             // SHA-1 Pseudo-Random Number Generation es un algoritmo 
             // de generación de números pseudoaleatorios utilizados por SHA-1.
             // definicion sacada de wikipedia
-            SecureRandom secureRandomGenerator = SecureRandom.getInstance("SHA1PRNG");
+            SecureRandom secureRandomGenerator = null;
+            try {
+                secureRandomGenerator = SecureRandom.getInstance("SHA1PRNG");
+            } catch (NoSuchAlgorithmException ex) {
+                System.out.println(ex);
+            }
             int seedByteCount = claveString.length();
             byte[] seed = secureRandomGenerator.generateSeed(seedByteCount);
             SecureRandom secureRandom = SecureRandom.getInstance("SHA1PRNG");
-            secureRandom.setSeed(claveString.getBytes());
+            secureRandom.setSeed(seed);
 
             // GENERO LA CLAVE CON EL ALGORITMO AES
             KeyGenerator kg = KeyGenerator.getInstance("AES");
@@ -79,26 +82,87 @@ public class Tarea7_PSP {
                     + "el usuario + password: "
                     + Arrays.toString(clavePass.getEncoded()));
             System.out.println("numero secureRandom: " + secureRandom.nextInt());
-          
+            cifrado(clavePass);
+            clave = clavePass;
+            System.out.println("la clave a enviar es :" + clavePass);
+
+        } catch (NoSuchAlgorithmException ex) {
+            System.out.println(ex);
+        }
+        return clave;
+    }
+
+    private static void cifrado(SecretKey clavePass) {
+
+        try {
             //iniciar cifrado
             Cipher cifrado = Cipher.getInstance("Rijndael/ECB/PKCS5Padding");
             // inicio el objeto cifrado en modo Encriptación
             cifrado.init(Cipher.ENCRYPT_MODE, clavePass);
-            
-            System.out.println("el cifrado de la contraseña es: " + cifrado);
+            byte[] buffer = new byte[1000];
+            byte[] bufferCifrado = null;
+
+            // CREO EL FICHERO EN EL QUE SE
+            FileInputStream leerFichero = new FileInputStream("fichero.texto");
+            FileOutputStream grabarFichero = new FileOutputStream("fichero.cifrado");
+
+//            BufferedReader br = new BufferedReader(new FileReader("fichero.descifrado"));
+            int bytesLeidos = leerFichero.read(buffer, 0, 1000);
+            while (bytesLeidos != -1) {
+
+                bufferCifrado = cifrado.update(buffer, 0, bytesLeidos);
+                grabarFichero.write(bufferCifrado);
+                bytesLeidos = leerFichero.read(buffer, 0, 1000);
+            }
+
+            bufferCifrado = cifrado.doFinal();
+            grabarFichero.write(bufferCifrado);
+            grabarFichero.close();
+            leerFichero.close();
+
         } catch (NoSuchAlgorithmException | NoSuchPaddingException
-                | InvalidKeyException ex) {
+                | InvalidKeyException | IOException
+                | IllegalBlockSizeException | BadPaddingException ex) {
             System.out.println(ex);
         }
-
     }
 
-    private static SecretKey cifrarFichero(String criptofichero) {
+    private static void descifrarClave(SecretKey clave) {
+        System.out.println("clave de nuevo enviada: " + clave);
 
-        return null;
+        try {
+            //iniciar cifrado
+            Cipher desCifrado = Cipher.getInstance("Rijndael/ECB/PKCS5Padding");
+            // inicio el objeto cifrado en modo Encriptación
+            desCifrado.init(Cipher.DECRYPT_MODE, clave);
+
+            // CREO EL FICHERO EN EL QUE SE 
+            FileInputStream ficheroEntrada = new FileInputStream("fichero.cifrado");
+            FileOutputStream ficheroSalida = new FileOutputStream("fichero.descifrado");
+            byte[] buffer = new byte[1000];
+            byte[] bufferDescifrado;
+            // LEER EL FICHERO CIFRADO DE 1K EN 1K Y ESTOS FRAGMENTOS LOS DECIFRA
+            int bytesLeidos = ficheroEntrada.read(buffer, 0, 1000);
+            System.out.print(bytesLeidos);
+
+            while (bytesLeidos != -1) {
+                // PASA TEXTO CIFRADO AL DESCIFRADOR
+                // Y LO ASIGNA bufferDescifrado
+                bufferDescifrado = desCifrado.update(buffer, 0, bytesLeidos);
+                ficheroSalida.write(bufferDescifrado);
+                bytesLeidos = ficheroEntrada.read(buffer, 0, 1000);
+            }
+
+            bufferDescifrado = desCifrado.doFinal();
+            ficheroSalida.write(bufferDescifrado);
+//            System.out.println("el fichero descifrado es : " + bytesLeidos);
+            ficheroSalida.close();
+            ficheroEntrada.close();
+
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException
+                | InvalidKeyException | IOException
+                | IllegalBlockSizeException | BadPaddingException ex) {
+            System.out.println(ex);
+        }
     }
-
-    private static void almacenarClave() {
-    }
-
 }
