@@ -15,12 +15,10 @@ public class Tarea7_PSP {
     static String cadena = "";
     static int longitudCadena;
     static char letraCadena;
-
     static SecretKey clavePass = null;
     static SecretKey clave = null;
 
-    public static void main(String[] args)
-            throws NoSuchAlgorithmException, NoSuchPaddingException {
+    public static void main(String[] args){
 
         // GENERO UN FICHERO DE TEXTO DE CONTENIDO Y LONGITUD ALEATORIA
         // ENTRE 10 Y 20 CARACTERES
@@ -44,7 +42,7 @@ public class Tarea7_PSP {
             System.out.println(ex);
         }
 
-        System.out.println(cadena);
+        System.out.println("La cedena aleatoria formada y guardada: "+cadena+"\n");
 
         clave = crearClave();
         descifrarClave(clave);
@@ -57,7 +55,7 @@ public class Tarea7_PSP {
             String nombreUsuario = JOptionPane.showInputDialog("introduce tu nombre de usuario");
             String passWord = JOptionPane.showInputDialog("introducir password");
             String claveString = nombreUsuario + passWord;
-            System.out.println(claveString);
+            System.out.println("La clve formada por usuario+pass: "+claveString+"\n");
 
             // CREACION DE LA SEMILLA CON LOS DATOS DE USUARIO
             // SHA-1 Pseudo-Random Number Generation es un algoritmo 
@@ -81,10 +79,9 @@ public class Tarea7_PSP {
             System.out.println("Clave generada con "
                     + "el usuario + password: "
                     + Arrays.toString(clavePass.getEncoded()));
-            System.out.println("numero secureRandom: " + secureRandom.nextInt());
+            System.out.println("\nSEMILLA secureRandom: " + secureRandom.nextInt());
             cifrado(clavePass);
             clave = clavePass;
-            System.out.println("la clave a enviar es :" + clavePass);
 
         } catch (NoSuchAlgorithmException ex) {
             System.out.println(ex);
@@ -116,6 +113,7 @@ public class Tarea7_PSP {
             }
 
             bufferCifrado = cifrado.doFinal();
+            System.out.println("\nEl fichero cifrado es: "+new String(bufferCifrado,"UTF-8"));
             grabarFichero.write(bufferCifrado);
             grabarFichero.close();
             leerFichero.close();
@@ -128,7 +126,6 @@ public class Tarea7_PSP {
     }
 
     private static void descifrarClave(SecretKey clave) {
-        System.out.println("clave de nuevo enviada: " + clave);
 
         try {
             //iniciar cifrado
@@ -143,21 +140,23 @@ public class Tarea7_PSP {
             byte[] bufferDescifrado;
             // LEER EL FICHERO CIFRADO DE 1K EN 1K Y ESTOS FRAGMENTOS LOS DECIFRA
             int bytesLeidos = ficheroEntrada.read(buffer, 0, 1000);
-            System.out.print(bytesLeidos);
 
             while (bytesLeidos != -1) {
                 // PASA TEXTO CIFRADO AL DESCIFRADOR
                 // Y LO ASIGNA bufferDescifrado
                 bufferDescifrado = desCifrado.update(buffer, 0, bytesLeidos);
+                
                 ficheroSalida.write(bufferDescifrado);
                 bytesLeidos = ficheroEntrada.read(buffer, 0, 1000);
             }
-
+            
             bufferDescifrado = desCifrado.doFinal();
+            System.out.println("\nEl fichero descifrado es: "+new String(bufferDescifrado,"UTF-8"));
             ficheroSalida.write(bufferDescifrado);
 //            System.out.println("el fichero descifrado es : " + bytesLeidos);
             ficheroSalida.close();
             ficheroEntrada.close();
+            
 
         } catch (NoSuchAlgorithmException | NoSuchPaddingException
                 | InvalidKeyException | IOException
